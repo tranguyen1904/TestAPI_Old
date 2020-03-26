@@ -24,20 +24,66 @@ namespace TestAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Customer>>> GetCustomers()
+        public async Task<ActionResult<IEnumerable<CustomerViewModel>>> GetCustomers()
         {
-            return await _context.Customer.ToListAsync();
+            var customers = await _context.Customer.ToListAsync();
+            var customervm = _mapper.Map<IEnumerable<Customer>, IEnumerable<CustomerViewModel>>(customers);
+            return Ok(customervm);
         }
 
-        [HttpGet ("{id}")]
-        public async Task<ActionResult<Customer>> GetCustomer(int id)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<CustomerViewModel>> GetCustomer(int id)
         {
             Customer customer = await _context.Customer.FindAsync(id);
             if (customer == null)
             {
                 return NotFound();
             }
+            return _mapper.Map<Customer, CustomerViewModel>(customer);
+        }
+
+        [HttpGet("{id}/detail")]
+        public async Task<ActionResult<Customer>> GetCustomerWithDetail(int id)
+        {
+            var customer = await _context.Customer.FindAsync(id);
+            var productorder = _context.PurchaseOrder.Where(po=>po.CustomerId==id).ToList();
+            foreach(var po in productorder)
+            {
+                customer.PurchaseOrder.Add(po);
+            }
+            if (customer == null)
+            {
+                return NotFound();
+            }
             return customer;
+        }
+
+        [HttpPut("{id}")]
+
+        public async Task<ActionResult> PutCustomer(int id, [FromBody] CustomerViewModel vmcustomer)
+        {
+            Customer customer = _mapper.Map<CustomerViewModel, Customer>(vmcustomer);
+            if (id != customer.Id)
+            {
+                return BadRequest();
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception)
+            {
+                if (!CustomerExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return NoContent();
         }
 
         [HttpPost]
@@ -46,11 +92,30 @@ namespace TestAPI.Controllers
             Customer customer = _mapper.Map<CustomerViewModel, Customer>(vmcustomer);
             if (CustomerExists(customer.Id))
             {
-                return BadRequest($"Customer ID={customer.Id} already exists. Can not insert!");
+                return StatusCode(409,$"Customer ID={customer.Id} already exists. Can not insert!");
             }
             _context.Customer.Add(customer);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetCustomer), new { id=customer.Id}, vmcustomer);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<CustomerViewModel>> Delete(int id)
+        {
+            var customer = await _context.Customer.FindAsync(id);
+
+            if (!CustomerExists(id))
+            {
+                return NotFound();
+            }
+            var purchaseOrder = _context.PurchaseOrder.Where(po => po.CustomerId == customer.Id);
+            foreach(var po in purchaseOrder)
+            {
+                customer.PurchaseOrder.Remove(po);
+            }
+            _context.Customer.Remove(customer);
+            await _context.SaveChangesAsync();
+            return _mapper.Map<Customer, CustomerViewModel>(customer);
         }
 
         private bool CustomerExists(int id)

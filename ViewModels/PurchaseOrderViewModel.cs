@@ -10,6 +10,7 @@ namespace TestAPI.ViewModels
         public int Id { get; set; }
         [Required]
         public int CustomerId { get; set; }
+        [Required]
         public int EmployeeId { get; set; }
         public DateTime? OrderDate { get; set; }
 

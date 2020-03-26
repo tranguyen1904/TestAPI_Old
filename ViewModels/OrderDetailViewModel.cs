@@ -7,6 +7,8 @@ namespace TestAPI.ViewModels
     public class OrderDetailViewModel
     {
         [Required]
+        public int OrderDetailId { get; set; }
+        [Required]
         public int OrderId { get; set; }
         [Required]
         public int ProductId { get; set; }

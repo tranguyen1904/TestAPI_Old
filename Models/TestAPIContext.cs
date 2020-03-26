@@ -6,9 +6,9 @@ namespace TestAPI.Models
 {
     public partial class TestAPIContext : DbContext
     {
-        //public TestAPIContext()
-        //{
-        //}
+        public TestAPIContext()
+        {
+        }
 
         public TestAPIContext(DbContextOptions<TestAPIContext> options)
             : base(options)
@@ -21,14 +21,14 @@ namespace TestAPI.Models
         public virtual DbSet<Product> Product { get; set; }
         public virtual DbSet<PurchaseOrder> PurchaseOrder { get; set; }
 
-//        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-//        {
-//            if (!optionsBuilder.IsConfigured)
-//            {
-//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-//                optionsBuilder.UseSqlServer("Data Source=tnkhanh;Initial Catalog=TestAPI;Integrated Security=True");
-//            }
-//        }
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
+                optionsBuilder.UseSqlServer("Data Source=tnkhanh;Initial Catalog=TestAPI;Integrated Security=True");
+            }
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -64,12 +64,13 @@ namespace TestAPI.Models
 
             modelBuilder.Entity<OrderDetail>(entity =>
             {
-                entity.HasKey(e => new { e.OrderId, e.ProductId })
-                    .HasName("PK__OrderDet__08D097C147E7EFA5");
-
                 entity.HasIndex(e => new { e.OrderId, e.ProductId })
-                    .HasName("UQ__OrderDet__08D097C00100D003")
+                    .HasName("UQ__OrderDet__08D097C0403C9EF7")
                     .IsUnique();
+
+                entity.Property(e => e.OrderDetailId)
+                    .HasColumnName("OrderDetailID")
+                    .ValueGeneratedNever();
 
                 entity.Property(e => e.OrderId).HasColumnName("OrderID");
 
@@ -78,14 +79,12 @@ namespace TestAPI.Models
                 entity.HasOne(d => d.Order)
                     .WithMany(p => p.OrderDetail)
                     .HasForeignKey(d => d.OrderId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__OrderDeta__Order__5629CD9C");
+                    .HasConstraintName("FK__OrderDeta__Order__6E01572D");
 
                 entity.HasOne(d => d.Product)
                     .WithMany(p => p.OrderDetail)
                     .HasForeignKey(d => d.ProductId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__OrderDeta__Produ__571DF1D5");
+                    .HasConstraintName("FK__OrderDeta__Produ__6EF57B66");
             });
 
             modelBuilder.Entity<Product>(entity =>
@@ -116,14 +115,12 @@ namespace TestAPI.Models
                 entity.HasOne(d => d.Customer)
                     .WithMany(p => p.PurchaseOrder)
                     .HasForeignKey(d => d.CustomerId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__PurchaseO__Custo__4F7CD00D");
+                    .HasConstraintName("FK__PurchaseO__Custo__6754599E");
 
                 entity.HasOne(d => d.Employee)
                     .WithMany(p => p.PurchaseOrder)
                     .HasForeignKey(d => d.EmployeeId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__PurchaseO__Emplo__5070F446");
+                    .HasConstraintName("FK__PurchaseO__Emplo__68487DD7");
             });
 
             OnModelCreatingPartial(modelBuilder);

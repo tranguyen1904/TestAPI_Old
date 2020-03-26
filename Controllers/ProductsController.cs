@@ -6,6 +6,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TestAPI.Extensions;
 using TestAPI.Models;
 using TestAPI.ViewModels;
 
@@ -47,12 +48,10 @@ namespace TestAPI.Controllers
             return vmproduct;
         }
 
-        // PUT: api/Products/5
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for
-        // more details see https://aka.ms/RazorPagesCRUD.
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(int id, Product product)
+        public async Task<IActionResult> PutProduct(int id, ProductViewModel vmproduct)
         {
+            var product = _mapper.Map<ProductViewModel, Product>(vmproduct);
             if (id != product.Id)
             {
                 return BadRequest();
@@ -79,28 +78,36 @@ namespace TestAPI.Controllers
             return NoContent();
         }
 
-        // POST: api/Products
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for
-        // more details see https://aka.ms/RazorPagesCRUD.
         [HttpPost]
         public async Task<ActionResult<Product>> PostProduct([FromBody] ProductViewModel VMproduct)
         {
             Product product = _mapper.Map<ProductViewModel, Product>(VMproduct);
-            if (ProductExists(product.Id))
+
+            try
             {
-                return BadRequest($"Product ID={product.Id} already exists. Can not insert to database.");
+                if (ModelState.IsValid)
+                {
+                    _context.Product.Add(product);
+                    await _context.SaveChangesAsync();
+
+                    return CreatedAtAction("GetProduct", new { id = product.Id }, product);
+                }
+            } catch (Exception e)
+            {
+                if (ProductExists(product.Id))
+                {
+                    return StatusCode(409,$"Product ID={product.Id} already exists. Can not insert to database.");
+                }
+                ModelState.AddModelError("",e.Message);
+                return BadRequest(ModelState.GetErrorMessages());
             }
-
-
-            _context.Product.Add(product);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetProduct", new { id = product.Id }, product);
+            
+            return BadRequest();
         }
 
         // DELETE: api/Products/5
         [HttpDelete("{id}")]
-        public async Task<ActionResult<Product>> DeleteProduct(int id)
+        public async Task<ActionResult<ProductViewModel>> DeleteProduct(int id)
         {
             var product = await _context.Product.FindAsync(id);
             if (product == null)
@@ -108,10 +115,17 @@ namespace TestAPI.Controllers
                 return NotFound();
             }
 
+
+            var orderdetails = _context.OrderDetail.Where(a => a.ProductId == product.Id);
+            foreach (var orderdetail in orderdetails)
+            {
+                product.OrderDetail.Remove(orderdetail);
+            }
+            
             _context.Product.Remove(product);
             await _context.SaveChangesAsync();
 
-            return product;
+            return _mapper.Map<Product, ProductViewModel>(product);
         }
 
         private bool ProductExists(int id)
