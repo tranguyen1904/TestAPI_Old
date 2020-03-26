@@ -63,7 +63,7 @@ namespace TestAPI.Controllers
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception)
             {
                 if (!EmployeeExists(id))
                 {
@@ -71,7 +71,7 @@ namespace TestAPI.Controllers
                 }
                 else
                 {
-                    throw;
+                    return StatusCode(500, "Internal server error");
                 }
             }
 
@@ -88,7 +88,7 @@ namespace TestAPI.Controllers
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateException)
+            catch (Exception)
             {
                 if (EmployeeExists(employee.Id))
                 {
@@ -96,7 +96,7 @@ namespace TestAPI.Controllers
                 }
                 else
                 {
-                    throw;
+                    return StatusCode(500, "Internal server error");
                 }
             }
 

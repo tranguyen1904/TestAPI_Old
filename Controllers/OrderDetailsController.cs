@@ -63,15 +63,23 @@ namespace TestAPI.Controllers
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception)
             {
                 if (!OrderDetailExists(id))
                 {
                     return NotFound();
                 }
+                else if (!_context.PurchaseOrder.Any(c => c.Id == orderDetail.OrderId))
+                {
+                    return StatusCode(400, $"PurChaseOrder ID={orderDetail.OrderId} does not exists. Can not update to database.");
+                }
+                else if (!_context.Product.Any(e => e.Id == orderDetail.ProductId))
+                {
+                    return StatusCode(400, $"Product ID={orderDetail.ProductId} does not exists. Can not update to database.");
+                }
                 else
                 {
-                    throw;
+                    return StatusCode(500, "Internal server error");
                 }
             }
 
@@ -89,15 +97,23 @@ namespace TestAPI.Controllers
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateException)
+            catch (Exception)
             {
                 if (OrderDetailExists(orderDetail.OrderId))
                 {
                     return StatusCode(409, $"OrderDetail ID={orderDetail.OrderDetailId} already exists. Can not insert to database."); ;
                 }
+                else if (!_context.PurchaseOrder.Any(c => c.Id == orderDetail.OrderId))
+                {
+                    return StatusCode(400, $"PurChaseOrder ID={orderDetail.OrderId} does not exists. Can not insert to database.");
+                }
+                else if (!_context.Product.Any(e => e.Id == orderDetail.ProductId))
+                {
+                    return StatusCode(400, $"Product ID={orderDetail.ProductId} does not exists. Can not insert to database.");
+                }
                 else
                 {
-                    throw;
+                    return StatusCode(500, "Internal server error");
                 }
             }
 

@@ -63,7 +63,7 @@ namespace TestAPI.Controllers
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception)
             {
                 if (!ProductExists(id))
                 {
@@ -71,7 +71,7 @@ namespace TestAPI.Controllers
                 }
                 else
                 {
-                    throw;
+                    return StatusCode(500, "Internal server error");
                 }
             }
 

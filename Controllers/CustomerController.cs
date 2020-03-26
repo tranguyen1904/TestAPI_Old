@@ -80,7 +80,7 @@ namespace TestAPI.Controllers
                 }
                 else
                 {
-                    throw;
+                    return StatusCode(500, "Internal server error");
                 }
             }
             return NoContent();
@@ -95,7 +95,14 @@ namespace TestAPI.Controllers
                 return StatusCode(409,$"Customer ID={customer.Id} already exists. Can not insert!");
             }
             _context.Customer.Add(customer);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            } catch (Exception)
+            {
+                return StatusCode(500, "Internal server error");
+            }
+            
             return CreatedAtAction(nameof(GetCustomer), new { id=customer.Id}, vmcustomer);
         }
 
