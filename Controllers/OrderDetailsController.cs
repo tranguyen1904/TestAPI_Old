@@ -52,7 +52,7 @@ namespace TestAPI.Controllers
         public async Task<IActionResult> PutOrderDetail(int id, OrderDetailViewModel orderDetailVM)
         {
             OrderDetail orderDetail = _mapper.Map<OrderDetailViewModel, OrderDetail>(orderDetailVM);
-            if (id != orderDetail.OrderId)
+            if (id != orderDetail.OrderDetailId)
             {
                 return BadRequest();
             }
@@ -99,7 +99,7 @@ namespace TestAPI.Controllers
             }
             catch (Exception)
             {
-                if (OrderDetailExists(orderDetail.OrderId))
+                if (OrderDetailExists(orderDetail.OrderDetailId))
                 {
                     return StatusCode(409, $"OrderDetail ID={orderDetail.OrderDetailId} already exists. Can not insert to database."); ;
                 }

@@ -45,12 +45,13 @@ namespace TestAPI.Controllers
         [HttpGet("{id}/detail")]
         public async Task<ActionResult<Customer>> GetCustomerWithDetail(int id)
         {
-            var customer = await _context.Customer.FindAsync(id);
-            var productorder = _context.PurchaseOrder.Where(po=>po.CustomerId==id).ToList();
-            foreach(var po in productorder)
-            {
-                customer.PurchaseOrder.Add(po);
-            }
+            //var customer = await _context.Customer.FindAsync(id);
+            //var productorder = _context.PurchaseOrder.Where(po=>po.CustomerId==id).ToList();
+            //foreach(var po in productorder)
+            //{
+            //    customer.PurchaseOrder.Add(po);
+            //}
+            var customer = await _context.Customer.Include("PurchaseOrder").FirstOrDefaultAsync<Customer>(c=>c.Id==id);
             if (customer == null)
             {
                 return NotFound();
@@ -67,7 +68,7 @@ namespace TestAPI.Controllers
             {
                 return BadRequest();
             }
-
+            _context.Entry(customer).State = EntityState.Modified;
             try
             {
                 await _context.SaveChangesAsync();
