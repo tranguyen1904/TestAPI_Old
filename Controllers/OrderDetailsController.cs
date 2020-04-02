@@ -6,6 +6,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TestAPI.Contracts;
 using TestAPI.Models;
 using TestAPI.ViewModels;
 
@@ -15,130 +16,135 @@ namespace TestAPI.Controllers
     [ApiController]
     public class OrderDetailsController : ControllerBase
     {
-        private readonly TestAPIContext _context;
-        private readonly IMapper _mapper;
-        public OrderDetailsController(TestAPIContext context, IMapper mapper)
+        private IMapper _mapper;
+        private IRepositoryWrapper _repoWrapper;
+        public OrderDetailsController(IMapper mapper, IRepositoryWrapper repoWrapper)
         {
-            _context = context;
+
             _mapper = mapper;
+            _repoWrapper = repoWrapper;
         }
 
-        // GET: api/OrderDetails
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<OrderDetailViewModel>>> GetOrderDetail()
+        public async Task<IActionResult> GetOrderDetails()
         {
-            var orderDetail = await _context.OrderDetail.ToListAsync();
-            var orderDetailVM = _mapper.Map<IEnumerable<OrderDetail>, IEnumerable<OrderDetailViewModel>>(orderDetail);
-            return Ok(orderDetailVM);
+            try
+            {
+                var orderDetails = await _repoWrapper.OrderDetail.GetOrderDetailsAsync();
+                return Ok(_mapper.Map<IEnumerable<OrderDetailViewModel>>(orderDetails));
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // GET: api/OrderDetails/5
         [HttpGet("{id}")]
         public async Task<ActionResult<OrderDetailViewModel>> GetOrderDetail(int id)
         {
-            var orderDetail = await _context.OrderDetail.FindAsync(id);
-
-            if (orderDetail == null)
-            {
-                return NotFound();
-            }
-
-            return _mapper.Map<OrderDetail, OrderDetailViewModel>(orderDetail);
-        }
-
-        // PUT: api/OrderDetails/5
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutOrderDetail(int id, OrderDetailViewModel orderDetailVM)
-        {
-            OrderDetail orderDetail = _mapper.Map<OrderDetailViewModel, OrderDetail>(orderDetailVM);
-            if (id != orderDetail.OrderDetailId)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(orderDetail).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception)
-            {
-                if (!OrderDetailExists(id))
+                var orderDetail = await _repoWrapper.OrderDetail.GetOrderDetailById(id);
+                if (orderDetail == null)
                 {
                     return NotFound();
                 }
-                else if (!_context.PurchaseOrder.Any(c => c.Id == orderDetail.OrderId))
-                {
-                    return StatusCode(400, $"PurChaseOrder ID={orderDetail.OrderId} does not exists. Can not update to database.");
-                }
-                else if (!_context.Product.Any(e => e.Id == orderDetail.ProductId))
-                {
-                    return StatusCode(400, $"Product ID={orderDetail.ProductId} does not exists. Can not update to database.");
-                }
                 else
                 {
-                    return StatusCode(500, "Internal server error");
+                    return Ok(_mapper.Map<OrderDetail, OrderDetailViewModel>(orderDetail));
                 }
             }
+            catch (Exception e)
+            {
+                return StatusCode(500, ErrorMessage.ServerError);
+            }
 
-            return NoContent();
         }
 
-        // POST: api/OrderDetails
-
         [HttpPost]
-        public async Task<ActionResult<OrderDetail>> PostOrderDetail([FromBody]OrderDetailViewModel orderDetailVM)
+        public async Task<ActionResult> PostOrderDetail([FromBody] OrderDetailViewModel orderDetailVM)
         {
-            OrderDetail orderDetail = _mapper.Map<OrderDetailViewModel, OrderDetail>(orderDetailVM);
-            _context.OrderDetail.Add(orderDetail);
+
             try
             {
-                await _context.SaveChangesAsync();
+                if (orderDetailVM == null)
+                {
+                    return BadRequest(ErrorMessage.ObjectNull(nameof(OrderDetail)));
+                }
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest();
+                }
+
+                OrderDetail orderDetail = await _repoWrapper.OrderDetail.GetOrderDetailById(orderDetailVM.OrderDetailId);
+                if (orderDetail != null)
+                {
+                    return BadRequest("Exists");
+                }
+                orderDetail = _mapper.Map<OrderDetail>(orderDetailVM);
+                _repoWrapper.OrderDetail.CreateOrderDetail(orderDetail);
+                await _repoWrapper.SaveAsync();
+                return CreatedAtAction(nameof(GetOrderDetail), new { id = orderDetail.OrderDetailId }, orderDetailVM);
             }
             catch (Exception)
             {
-                if (OrderDetailExists(orderDetail.OrderDetailId))
-                {
-                    return StatusCode(409, $"OrderDetail ID={orderDetail.OrderDetailId} already exists. Can not insert to database."); ;
-                }
-                else if (!_context.PurchaseOrder.Any(c => c.Id == orderDetail.OrderId))
-                {
-                    return StatusCode(400, $"PurChaseOrder ID={orderDetail.OrderId} does not exists. Can not insert to database.");
-                }
-                else if (!_context.Product.Any(e => e.Id == orderDetail.ProductId))
-                {
-                    return StatusCode(400, $"Product ID={orderDetail.ProductId} does not exists. Can not insert to database.");
-                }
-                else
-                {
-                    return StatusCode(500, "Internal server error");
-                }
+                return StatusCode(500, "Internal server error");
             }
-
-            return CreatedAtAction("GetOrderDetail", new { id = orderDetail.OrderId }, orderDetail);
         }
 
-        // DELETE: api/OrderDetails/5
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<OrderDetailViewModel>> DeleteOrderDetail(int id)
+        [HttpPut("{id}")]
+        public async Task<ActionResult> PutOrderDetail(int id, [FromBody] OrderDetailViewModel orderDetailVM)
         {
-            var orderDetail = await _context.OrderDetail.FindAsync(id);
-            if (orderDetail == null)
+            try
             {
-                return NotFound();
+                if (orderDetailVM == null)
+                {
+                    return BadRequest(ErrorMessage.ObjectNull(nameof(OrderDetail)));
+                }
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ErrorMessage.ModelInvalid);
+                }
+                if (id != orderDetailVM.OrderDetailId)
+                {
+                    return BadRequest();
+                }
+                var orderDetail = await _repoWrapper.OrderDetail.GetOrderDetailById(orderDetailVM.OrderDetailId);
+                if (orderDetail == null)
+                {
+                    return NotFound();
+                }
+                _mapper.Map(orderDetailVM, orderDetail);
+                _repoWrapper.OrderDetail.UpdateOrderDetail(orderDetail);
+                await _repoWrapper.SaveAsync();
+                return NoContent();
             }
-
-            _context.OrderDetail.Remove(orderDetail);
-            await _context.SaveChangesAsync();
-
-            return _mapper.Map<OrderDetail, OrderDetailViewModel>(orderDetail);
+            catch (Exception e)
+            {
+                return StatusCode(500, ErrorMessage.ServerError);
+            }
         }
 
-        private bool OrderDetailExists(int id)
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<OrderDetailViewModel>> Delete(int id)
         {
-            return _context.OrderDetail.Any(e => e.OrderDetailId == id);
+            try
+            {
+                OrderDetail orderDetail = await _repoWrapper.OrderDetail.GetOrderDetailById(id);
+                if (orderDetail == null)
+                {
+                    return NotFound();
+                }
+                _repoWrapper.OrderDetail.DeleteOrderDetail(orderDetail);
+                await _repoWrapper.SaveAsync();
+                return NoContent();
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, ErrorMessage.ServerError);
+            }
         }
+
     }
 }
+

@@ -15,6 +15,8 @@ using Microsoft.EntityFrameworkCore.SqlServer;
 using TestAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
+using TestAPI.Repositories;
+using TestAPI.Contracts;
 
 namespace TestAPI
 {
@@ -35,8 +37,8 @@ namespace TestAPI
             services.AddDbContext<TestAPIContext>(options => options.UseSqlServer(Configuration.GetConnectionString("Server")));
             services.AddAutoMapper(typeof(Startup));
             services.AddControllers().AddNewtonsoftJson(options =>
-            options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
-);
+            options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
+            services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -6,6 +6,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TestAPI.Contracts;
 using TestAPI.Models;
 using TestAPI.ViewModels;
 
@@ -15,131 +16,135 @@ namespace TestAPI.Controllers
     [ApiController]
     public class PurchaseOrdersController : ControllerBase
     {
-        private readonly TestAPIContext _context;
-        private readonly IMapper _mapper;
-
-        public PurchaseOrdersController(TestAPIContext context, IMapper mapper)
+        private IMapper _mapper;
+        private IRepositoryWrapper _repoWrapper;
+        public PurchaseOrdersController(IMapper mapper, IRepositoryWrapper repoWrapper)
         {
-            _context = context;
+
             _mapper = mapper;
+            _repoWrapper = repoWrapper;
         }
 
-        // GET: api/PurchaseOrders
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PurchaseOrderViewModel>>> GetPurchaseOrder()
+        public async Task<IActionResult> GetPurchaseOrders()
         {
-            var purchaseorder = await _context.PurchaseOrder.ToListAsync();
-            var po_vm = _mapper.Map<IEnumerable<PurchaseOrder>,IEnumerable<PurchaseOrderViewModel>>(purchaseorder);
-            return Ok(po_vm);
-
+            try
+            {
+                var purchaseOrders = await _repoWrapper.PurchaseOrder.GetPurchaseOrdersAsync();
+                return Ok(_mapper.Map<IEnumerable<PurchaseOrderViewModel>>(purchaseOrders));
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // GET: api/PurchaseOrders/5
         [HttpGet("{id}")]
         public async Task<ActionResult<PurchaseOrderViewModel>> GetPurchaseOrder(int id)
         {
-            var purchaseOrder = await _context.PurchaseOrder.FindAsync(id);
-           
-            if (purchaseOrder == null)
-            {
-                return NotFound();
-            }
-
-            return _mapper.Map<PurchaseOrder, PurchaseOrderViewModel>(purchaseOrder);
-        }
-
-        // PUT: api/PurchaseOrders/5
-        
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutPurchaseOrder(int id, PurchaseOrderViewModel purchaseOrderVM)
-        {
-            PurchaseOrder purchaseOrder = _mapper.Map<PurchaseOrderViewModel, PurchaseOrder>(purchaseOrderVM);
-            if (id != purchaseOrder.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(purchaseOrder).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception)
-            {
-                if (!PurchaseOrderExists(id))
+                var purchaseOrder = await _repoWrapper.PurchaseOrder.GetPurchaseOrderById(id);
+                if (purchaseOrder == null)
                 {
                     return NotFound();
                 }
-                else if (!_context.Customer.Any(c => c.Id == purchaseOrder.CustomerId))
-                {
-                    return StatusCode(400, $"Customer ID={purchaseOrder.CustomerId} does not exists. Can not update to database.");
-                }
-                else if (!_context.Employee.Any(e => e.Id == purchaseOrder.EmployeeId))
-                {
-                    return StatusCode(400, $"Employee ID={purchaseOrder.EmployeeId} does not exists. Can not update to database.");
-                }
                 else
                 {
-                    return StatusCode(500, "Internal server error");
+                    return Ok(_mapper.Map<PurchaseOrder, PurchaseOrderViewModel>(purchaseOrder));
                 }
             }
+            catch (Exception e)
+            {
+                return StatusCode(500, ErrorMessage.ServerError);
+            }
 
-            return NoContent();
         }
 
-        // POST: api/PurchaseOrders
         [HttpPost]
-        public async Task<ActionResult<PurchaseOrder>> PostPurchaseOrder(PurchaseOrderViewModel purchaseOrderVM)
+        public async Task<ActionResult> PostPurchaseOrder([FromBody] PurchaseOrderViewModel purchaseOrderVM)
         {
-            PurchaseOrder purchaseOrder = _mapper.Map<PurchaseOrderViewModel, PurchaseOrder>(purchaseOrderVM);
-            _context.PurchaseOrder.Add(purchaseOrder);
+
             try
             {
-                await _context.SaveChangesAsync();
+                if (purchaseOrderVM == null)
+                {
+                    return BadRequest(ErrorMessage.ObjectNull(nameof(PurchaseOrder)));
+                }
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest();
+                }
+
+                PurchaseOrder purchaseOrder = await _repoWrapper.PurchaseOrder.GetPurchaseOrderById(purchaseOrderVM.Id);
+                if (purchaseOrder != null)
+                {
+                    return BadRequest("Exists");
+                }
+                purchaseOrder = _mapper.Map<PurchaseOrder>(purchaseOrderVM);
+                _repoWrapper.PurchaseOrder.CreatePurchaseOrder(purchaseOrder);
+                await _repoWrapper.SaveAsync();
+                return CreatedAtAction(nameof(GetPurchaseOrder), new { id = purchaseOrder.Id }, purchaseOrderVM);
             }
             catch (Exception)
             {
-                if (PurchaseOrderExists(purchaseOrder.Id))
-                {
-                    return StatusCode(409, $"PurchaseOrder ID={purchaseOrder.Id} already exists. Can not insert to database.");
-                } 
-                else if (!_context.Customer.Any(c => c.Id==purchaseOrder.CustomerId))
-                {
-                    return StatusCode(400, $"Customer ID={purchaseOrder.CustomerId} does not exists. Can not insert to database.");
-                }
-                else if (!_context.Employee.Any(e => e.Id == purchaseOrder.EmployeeId))
-                {
-                    return StatusCode(400, $"Employee ID={purchaseOrder.EmployeeId} does not exists. Can not insert to database.");
-                }
-                else
-                {
-                    return StatusCode(500, "Internal server error");
-                }
+                return StatusCode(500, "Internal server error");
             }
-
-            return CreatedAtAction(nameof(GetPurchaseOrder), new { id = purchaseOrder.Id }, purchaseOrder);
         }
 
-        // DELETE: api/PurchaseOrders/5
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<PurchaseOrderViewModel>> DeletePurchaseOrder(int id)
+        [HttpPut("{id}")]
+        public async Task<ActionResult> PutPurchaseOrder(int id, [FromBody] PurchaseOrderViewModel purchaseOrderVM)
         {
-            var purchaseOrder = await _context.PurchaseOrder.FindAsync(id);
-            if (purchaseOrder == null)
+            try
             {
-                return NotFound();
+                if (purchaseOrderVM == null)
+                {
+                    return BadRequest(ErrorMessage.ObjectNull(nameof(PurchaseOrder)));
+                }
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ErrorMessage.ModelInvalid);
+                }
+                if (id != purchaseOrderVM.Id)
+                {
+                    return BadRequest();
+                }
+                var purchaseOrder = await _repoWrapper.PurchaseOrder.GetPurchaseOrderById(purchaseOrderVM.Id);
+                if (purchaseOrder == null)
+                {
+                    return NotFound();
+                }
+                _mapper.Map(purchaseOrderVM, purchaseOrder);
+                _repoWrapper.PurchaseOrder.UpdatePurchaseOrder(purchaseOrder);
+                await _repoWrapper.SaveAsync();
+                return NoContent();
             }
-
-            _context.PurchaseOrder.Remove(purchaseOrder);
-            await _context.SaveChangesAsync();
-
-            return _mapper.Map<PurchaseOrder, PurchaseOrderViewModel>(purchaseOrder);
+            catch (Exception e)
+            {
+                return StatusCode(500, ErrorMessage.ServerError);
+            }
         }
 
-        private bool PurchaseOrderExists(int id)
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<PurchaseOrderViewModel>> Delete(int id)
         {
-            return _context.PurchaseOrder.Any(e => e.Id == id);
+            try
+            {
+                PurchaseOrder purchaseOrder = await _repoWrapper.PurchaseOrder.GetPurchaseOrderById(id);
+                if (purchaseOrder == null)
+                {
+                    return NotFound();
+                }
+                _repoWrapper.PurchaseOrder.DeletePurchaseOrder(purchaseOrder);
+                await _repoWrapper.SaveAsync();
+                return NoContent();
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, ErrorMessage.ServerError);
+            }
         }
+
     }
 }
+

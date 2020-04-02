@@ -6,6 +6,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TestAPI.Contracts;
 using TestAPI.Models;
 using TestAPI.ViewModels;
 
@@ -15,120 +16,130 @@ namespace TestAPI.Controllers
     [ApiController]
     public class CustomersController : ControllerBase
     {
-        private TestAPIContext _context;
+        
         private IMapper _mapper;
-        public CustomersController(TestAPIContext context, IMapper mapper)
+        private IRepositoryWrapper _repoWrapper;
+        public CustomersController(IMapper mapper, IRepositoryWrapper repoWrapper)
         {
-            _context = context;
+            
             _mapper = mapper;
+            _repoWrapper = repoWrapper;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CustomerViewModel>>> GetCustomers()
+        public async Task<IActionResult> GetCustomers()
         {
-            var customers = await _context.Customer.ToListAsync();
-            var customervm = _mapper.Map<IEnumerable<Customer>, IEnumerable<CustomerViewModel>>(customers);
-            return Ok(customervm);
+            try
+            {
+                var customers = await _repoWrapper.Customer.GetCustomersAsync();
+                return Ok(_mapper.Map<IEnumerable<CustomerViewModel>>(customers));
+            } catch (Exception)
+            {
+                return StatusCode(500, "Internal server error");
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<CustomerViewModel>> GetCustomer(int id)
         {
-            Customer customer = await _context.Customer.FindAsync(id);
-            if (customer == null)
-            {
-                return NotFound();
-            }
-            return _mapper.Map<Customer, CustomerViewModel>(customer);
-        }
-
-        [HttpGet("{id}/detail")]
-        public async Task<ActionResult<Customer>> GetCustomerWithDetail(int id)
-        {
-            var customer = await _context.Customer.FindAsync(id);
-            var productorder = _context.PurchaseOrder.Where(po=>po.CustomerId==id).ToList();
-            foreach(var po in productorder)
-            {
-                customer.PurchaseOrder.Add(po);
-            }
-            if (customer == null)
-            {
-                return NotFound();
-            }
-            return customer;
-        }
-
-        [HttpPut("{id}")]
-
-        public async Task<ActionResult> PutCustomer(int id, [FromBody] CustomerViewModel vmcustomer)
-        {
-            Customer customer = _mapper.Map<CustomerViewModel, Customer>(vmcustomer);
-            if (id != customer.Id)
-            {
-                return BadRequest();
-            }
-            _context.Entry(customer).State = EntityState.Modified;
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception)
-            {
-                if (!CustomerExists(id))
+                var customer = await _repoWrapper.Customer.GetCustomerById(id);
+                if (customer == null)
                 {
                     return NotFound();
                 }
                 else
                 {
-                    return StatusCode(500, "Internal server error");
+                    return Ok(_mapper.Map<Customer, CustomerViewModel>(customer));
                 }
+            } catch(Exception e)
+            {
+                return StatusCode(500, ErrorMessage.ServerError);
             }
-            return NoContent();
+            
         }
 
         [HttpPost]
-        public async Task<ActionResult> PostCustomer([FromBody] CustomerViewModel vmcustomer)
+        public async Task<ActionResult> PostCustomer([FromBody] CustomerViewModel customerVM)
         {
-            Customer customer = _mapper.Map<CustomerViewModel, Customer>(vmcustomer);
-            if (CustomerExists(customer.Id))
-            {
-                return StatusCode(409,$"Customer ID={customer.Id} already exists. Can not insert!");
-            }
-            _context.Customer.Add(customer);
+            
             try
             {
-                await _context.SaveChangesAsync();
+                if (customerVM == null)
+                {
+                    return BadRequest(ErrorMessage.ObjectNull(nameof(Customer)));
+                }
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest();
+                }
+
+                Customer customer = await _repoWrapper.Customer.GetCustomerById(customerVM.Id);
+                if (customer != null)
+                {
+                    return BadRequest("Exists");
+                }
+                customer = _mapper.Map<Customer>(customerVM);
+                _repoWrapper.Customer.CreateCustomer(customer);
+                await _repoWrapper.SaveAsync();
+                return CreatedAtAction(nameof(GetCustomer), new { id = customer.Id }, customerVM);
             } catch (Exception)
             {
                 return StatusCode(500, "Internal server error");
             }
-            
-            return CreatedAtAction(nameof(GetCustomer), new { id=customer.Id}, vmcustomer);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult> PutCustomer(int id, [FromBody] CustomerViewModel customerVM)
+        {
+            try
+            {
+                if (customerVM == null)
+                {
+                    return BadRequest(ErrorMessage.ObjectNull(nameof(Customer)));
+                }
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ErrorMessage.ModelInvalid);
+                }
+                if (id != customerVM.Id)
+                {
+                    return BadRequest();
+                }
+                var customer = await _repoWrapper.Customer.GetCustomerById(customerVM.Id);
+                if (customer == null)
+                {
+                    return NotFound();
+                }
+                _mapper.Map(customerVM, customer);
+                _repoWrapper.Customer.UpdateCustomer(customer);
+                await _repoWrapper.SaveAsync();
+                return NoContent();
+            } catch(Exception e)
+            {
+                return StatusCode(500, ErrorMessage.ServerError);
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult<CustomerViewModel>> Delete(int id)
         {
-            var customer = await _context.Customer.FindAsync(id);
-
-            if (!CustomerExists(id))
+            try
             {
-                return NotFound();
-            }
-            var purchaseOrder = _context.PurchaseOrder.Where(po => po.CustomerId == customer.Id);
-            foreach(var po in purchaseOrder)
+                Customer customer = await _repoWrapper.Customer.GetCustomerById(id);
+                if (customer == null)
+                {
+                    return NotFound();
+                }
+                _repoWrapper.Customer.DeleteCustomer(customer);
+                await _repoWrapper.SaveAsync();
+                return NoContent();
+            } catch(Exception e)
             {
-                customer.PurchaseOrder.Remove(po);
+                return StatusCode(500, ErrorMessage.ServerError);
             }
-            _context.Customer.Remove(customer);
-            await _context.SaveChangesAsync();
-            return _mapper.Map<Customer, CustomerViewModel>(customer);
         }
 
-        private bool CustomerExists(int id)
-        {
-            
-            return _context.Customer.Any(c => c.Id == id);
-        }
     }
 }

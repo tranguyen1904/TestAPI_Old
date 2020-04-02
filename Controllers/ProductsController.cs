@@ -6,6 +6,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TestAPI.Contracts;
 using TestAPI.Extensions;
 using TestAPI.Models;
 using TestAPI.ViewModels;
@@ -16,121 +17,133 @@ namespace TestAPI.Controllers
     [ApiController]
     public class ProductsController : ControllerBase
     {
-        private readonly TestAPIContext _context;
-        private readonly IMapper _mapper;
-
-        public ProductsController(TestAPIContext context, IMapper mapper)
+        private IMapper _mapper;
+        private IRepositoryWrapper _repoWrapper;
+        public ProductsController(IMapper mapper, IRepositoryWrapper repoWrapper)
         {
-            _context = context;
+
             _mapper = mapper;
+            _repoWrapper = repoWrapper;
         }
 
-        // GET: api/Products
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ProductViewModel>>> GetProducts()
+        public async Task<IActionResult> GetProducts()
         {
-            var products = await _context.Product.ToListAsync();
-            var vmproducts = _mapper.Map<IEnumerable<Product>, IEnumerable<ProductViewModel>>(products);
-            return Ok(vmproducts);
-        }
-
-        // GET: api/Products/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<ProductViewModel>> GetProduct(int id)
-        {
-            var product = await _context.Product.FindAsync(id);
-            
-            if (product == null)
-            {
-                return NotFound();
-            }
-            var vmproduct = _mapper.Map<Product, ProductViewModel>(product);
-            return vmproduct;
-        }
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(int id, ProductViewModel vmproduct)
-        {
-            var product = _mapper.Map<ProductViewModel, Product>(vmproduct);
-            if (id != product.Id)
-            {
-                return BadRequest();
-            }
-            
-            _context.Entry(product).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                var products = await _repoWrapper.Product.GetProductsAsync();
+                return Ok(_mapper.Map<IEnumerable<ProductViewModel>>(products));
             }
             catch (Exception)
             {
-                if (!ProductExists(id))
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpGet("{id}")]
+        public async Task<ActionResult<ProductViewModel>> GetProduct(int id)
+        {
+            try
+            {
+                var product = await _repoWrapper.Product.GetProductById(id);
+                if (product == null)
                 {
                     return NotFound();
                 }
                 else
                 {
-                    return StatusCode(500, "Internal server error");
+                    return Ok(_mapper.Map<Product, ProductViewModel>(product));
                 }
             }
-
-            return NoContent();
+            catch (Exception e)
+            {
+                return StatusCode(500, ErrorMessage.ServerError);
+            }
         }
 
         [HttpPost]
-        public async Task<ActionResult<Product>> PostProduct([FromBody] ProductViewModel VMproduct)
+        public async Task<ActionResult> PostProduct([FromBody] ProductViewModel productVM)
         {
-            Product product = _mapper.Map<ProductViewModel, Product>(VMproduct);
-
             try
             {
-                if (ModelState.IsValid)
+                if (productVM == null)
                 {
-                    _context.Product.Add(product);
-                    await _context.SaveChangesAsync();
+                    return BadRequest(ErrorMessage.ObjectNull(nameof(Product)));
+                }
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest();
+                }
 
-                    return CreatedAtAction("GetProduct", new { id = product.Id }, product);
-                }
-            } catch (Exception e)
-            {
-                if (ProductExists(product.Id))
+                Product product = await _repoWrapper.Product.GetProductById(productVM.Id);
+                if (product != null)
                 {
-                    return StatusCode(409,$"Product ID={product.Id} already exists. Can not insert to database.");
+                    return BadRequest("Exists");
                 }
-                ModelState.AddModelError("",e.Message);
-                return BadRequest(ModelState.GetErrorMessages());
+                product = _mapper.Map<Product>(productVM);
+                _repoWrapper.Product.CreateProduct(product);
+                await _repoWrapper.SaveAsync();
+                return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, productVM);
             }
-            
-            return BadRequest();
+            catch (Exception)
+            {
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // DELETE: api/Products/5
+        [HttpPut("{id}")]
+        public async Task<ActionResult> PutProduct(int id, [FromBody] ProductViewModel productVM)
+        {
+            try
+            {
+                if (productVM == null)
+                {
+                    return BadRequest(ErrorMessage.ObjectNull(nameof(Product)));
+                }
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ErrorMessage.ModelInvalid);
+                }
+                if (id != productVM.Id)
+                {
+                    return BadRequest();
+                }
+                var product = await _repoWrapper.Product.GetProductById(productVM.Id);
+                if (product == null)
+                {
+                    return NotFound();
+                }
+                _mapper.Map(productVM, product);
+                _repoWrapper.Product.UpdateProduct(product);
+                await _repoWrapper.SaveAsync();
+                return NoContent();
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, ErrorMessage.ServerError);
+            }
+        }
+
         [HttpDelete("{id}")]
-        public async Task<ActionResult<ProductViewModel>> DeleteProduct(int id)
+        public async Task<ActionResult<ProductViewModel>> Delete(int id)
         {
-            var product = await _context.Product.FindAsync(id);
-            if (product == null)
+            try
             {
-                return NotFound();
+                Product product = await _repoWrapper.Product.GetProductById(id);
+                if (product == null)
+                {
+                    return NotFound();
+                }
+                _repoWrapper.Product.DeleteProduct(product);
+                await _repoWrapper.SaveAsync();
+                return NoContent();
             }
-
-
-            var orderdetails = _context.OrderDetail.Where(a => a.ProductId == product.Id);
-            foreach (var orderdetail in orderdetails)
+            catch (Exception e)
             {
-                product.OrderDetail.Remove(orderdetail);
+                return StatusCode(500, ErrorMessage.ServerError);
             }
-            
-            _context.Product.Remove(product);
-            await _context.SaveChangesAsync();
-
-            return _mapper.Map<Product, ProductViewModel>(product);
         }
 
-        private bool ProductExists(int id)
-        {
-            return _context.Product.Any(e => e.Id == id);
-        }
     }
 }
+
