@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using TestAPI.Contracts;
+using TestAPI.Filters;
 using TestAPI.Models;
 using TestAPI.ViewModels;
 
@@ -16,135 +16,93 @@ namespace TestAPI.Controllers
     [ApiController]
     public class PurchaseOrdersController : ControllerBase
     {
+
         private IMapper _mapper;
         private IRepositoryWrapper _repoWrapper;
-        public PurchaseOrdersController(IMapper mapper, IRepositoryWrapper repoWrapper)
+        private ILoggerManager _logger;
+        public PurchaseOrdersController(IMapper mapper, IRepositoryWrapper repoWrapper, ILoggerManager logger)
         {
-
             _mapper = mapper;
             _repoWrapper = repoWrapper;
+            _logger = logger;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetPurchaseOrders()
         {
-            try
-            {
-                var purchaseOrders = await _repoWrapper.PurchaseOrder.GetPurchaseOrdersAsync();
-                return Ok(_mapper.Map<IEnumerable<PurchaseOrderViewModel>>(purchaseOrders));
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, "Internal server error");
-            }
+            var purchaseOrders = await _repoWrapper.PurchaseOrder.GetPurchaseOrdersAsync();
+            _logger.LogInfo(LogMessage.GetAll(nameof(PurchaseOrder)));
+            return Ok(_mapper.Map<IEnumerable<PurchaseOrderViewModel>>(purchaseOrders));
         }
 
         [HttpGet("{id}")]
+        [ServiceFilter(typeof(ValidateEntityExistsAttribute<PurchaseOrder>))]
         public async Task<ActionResult<PurchaseOrderViewModel>> GetPurchaseOrder(int id)
         {
-            try
-            {
-                var purchaseOrder = await _repoWrapper.PurchaseOrder.GetPurchaseOrderById(id);
-                if (purchaseOrder == null)
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    return Ok(_mapper.Map<PurchaseOrder, PurchaseOrderViewModel>(purchaseOrder));
-                }
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, ErrorMessage.ServerError);
-            }
-
+            PurchaseOrder purchaseOrder = HttpContext.Items["entity"] as PurchaseOrder;
+            _logger.LogInfo(LogMessage.GetById(nameof(PurchaseOrder), id));
+            return Ok(_mapper.Map<PurchaseOrder, PurchaseOrderViewModel>(purchaseOrder));
         }
 
         [HttpPost]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<ActionResult> PostPurchaseOrder([FromBody] PurchaseOrderViewModel purchaseOrderVM)
         {
-
-            try
+            PurchaseOrder purchaseOrder = await _repoWrapper.PurchaseOrder.GetPurchaseOrderById(purchaseOrderVM.Id);
+            if (purchaseOrder != null)
             {
-                if (purchaseOrderVM == null)
-                {
-                    return BadRequest(ErrorMessage.ObjectNull(nameof(PurchaseOrder)));
-                }
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest();
-                }
-
-                PurchaseOrder purchaseOrder = await _repoWrapper.PurchaseOrder.GetPurchaseOrderById(purchaseOrderVM.Id);
-                if (purchaseOrder != null)
-                {
-                    return BadRequest("Exists");
-                }
-                purchaseOrder = _mapper.Map<PurchaseOrder>(purchaseOrderVM);
-                _repoWrapper.PurchaseOrder.CreatePurchaseOrder(purchaseOrder);
-                await _repoWrapper.SaveAsync();
-                return CreatedAtAction(nameof(GetPurchaseOrder), new { id = purchaseOrder.Id }, purchaseOrderVM);
+                _logger.LogError(LogMessage.ExistsId(nameof(PurchaseOrder), purchaseOrderVM.Id));
+                return BadRequest(LogMessage.ExistsId(nameof(PurchaseOrder), purchaseOrderVM.Id));
             }
-            catch (Exception)
+            purchaseOrder = _mapper.Map<PurchaseOrder>(purchaseOrderVM);
+            if (purchaseOrder.Id == 0)
             {
-                return StatusCode(500, "Internal server error");
+                _logger.LogError(LogMessage.InvalidId(nameof(PurchaseOrder)));
+                return BadRequest(LogMessage.InvalidId(nameof(PurchaseOrder)));
             }
+            _repoWrapper.PurchaseOrder.CreatePurchaseOrder(purchaseOrder);
+            await _repoWrapper.SaveAsync();
+
+            _logger.LogInfo(LogMessage.Created(nameof(PurchaseOrder), purchaseOrderVM.Id));
+            return CreatedAtAction(nameof(GetPurchaseOrder), new { id = purchaseOrder.Id }, purchaseOrderVM);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult> PutPurchaseOrder(int id, [FromBody] PurchaseOrderViewModel purchaseOrderVM)
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
+        [ServiceFilter(typeof(ValidateEntityExistsAttribute<PurchaseOrder>))]
+        public async Task<ActionResult> PutPurchaseOrder(int id, PurchaseOrderViewModel purchaseOrderVM)
         {
-            try
+            if (id != purchaseOrderVM.Id)
             {
-                if (purchaseOrderVM == null)
-                {
-                    return BadRequest(ErrorMessage.ObjectNull(nameof(PurchaseOrder)));
-                }
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ErrorMessage.ModelInvalid);
-                }
-                if (id != purchaseOrderVM.Id)
-                {
-                    return BadRequest();
-                }
-                var purchaseOrder = await _repoWrapper.PurchaseOrder.GetPurchaseOrderById(purchaseOrderVM.Id);
-                if (purchaseOrder == null)
-                {
-                    return NotFound();
-                }
-                _mapper.Map(purchaseOrderVM, purchaseOrder);
-                _repoWrapper.PurchaseOrder.UpdatePurchaseOrder(purchaseOrder);
-                await _repoWrapper.SaveAsync();
-                return NoContent();
+                _logger.LogError(LogMessage.IdNotMatch());
+                return BadRequest(LogMessage.IdNotMatch());
             }
-            catch (Exception e)
-            {
-                return StatusCode(500, ErrorMessage.ServerError);
-            }
+
+            PurchaseOrder purchaseOrder = HttpContext.Items["entity"] as PurchaseOrder;
+            _mapper.Map(purchaseOrderVM, purchaseOrder);
+
+            _repoWrapper.PurchaseOrder.UpdatePurchaseOrder(purchaseOrder);
+            await _repoWrapper.SaveAsync();
+
+            _logger.LogInfo(LogMessage.Updated(nameof(PurchaseOrder), id));
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<PurchaseOrderViewModel>> Delete(int id)
+        [ServiceFilter(typeof(ValidateEntityExistsAttribute<PurchaseOrder>))]
+        public async Task<ActionResult<PurchaseOrderViewModel>> DeletePurchaseOrder(int id)
         {
-            try
+            PurchaseOrder purchaseOrder = HttpContext.Items["entity"] as PurchaseOrder;
+            if ((await _repoWrapper.OrderDetail.OrderDetailsByPurchaseOrder(id)).Any())
             {
-                PurchaseOrder purchaseOrder = await _repoWrapper.PurchaseOrder.GetPurchaseOrderById(id);
-                if (purchaseOrder == null)
-                {
-                    return NotFound();
-                }
-                _repoWrapper.PurchaseOrder.DeletePurchaseOrder(purchaseOrder);
-                await _repoWrapper.SaveAsync();
-                return NoContent();
+                _logger.LogError(LogMessage.DeleteError(nameof(PurchaseOrder), id, nameof(OrderDetail)));
+                return BadRequest(LogMessage.DeleteError(nameof(PurchaseOrder), id, nameof(OrderDetail)));
             }
-            catch (Exception e)
-            {
-                return StatusCode(500, ErrorMessage.ServerError);
-            }
-        }
+            _repoWrapper.PurchaseOrder.DeletePurchaseOrder(purchaseOrder);
+            await _repoWrapper.SaveAsync();
 
+            _logger.LogInfo(LogMessage.Deleted(nameof(PurchaseOrder), id));
+            return NoContent();
+        }
     }
 }
-

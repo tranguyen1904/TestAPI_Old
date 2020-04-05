@@ -15,5 +15,7 @@ namespace TestAPI.Contracts
         void CreateCustomer(Customer customer);
         void UpdateCustomer(Customer customer);
         void DeleteCustomer(Customer customer);
+
+
     }
 }

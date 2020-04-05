@@ -39,5 +39,15 @@ namespace TestAPI.Repositories
         {
             Delete(PurchaseOrder);
         }
+
+        public async Task<IEnumerable<PurchaseOrder>> PurchaseOrdersByCustomer(int Id)
+        {
+            return await FindByCondition(p => p.CustomerId == Id).ToListAsync();
+        }
+
+        public async Task<IEnumerable<PurchaseOrder>> PurchaseOrdersByEmployee(int Id)
+        {
+            return await FindByCondition(p => p.EmployeeId == Id).ToListAsync();
+        }
     }
 }

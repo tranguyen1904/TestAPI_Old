@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using TestAPI.Contracts;
@@ -89,6 +90,14 @@ namespace TestAPI.Repositories
         public async Task SaveAsync()
         {
             await _context.SaveChangesAsync();
+        }
+
+        public IRepositoryBase<T> GetRepo<T>() where T: IEntity
+        {
+            Type type = this.GetType();
+            var propertyInfo = type.GetProperty(typeof(T).Name);
+            IRepositoryBase<T> propertyValue = (propertyInfo == null)?null: (IRepositoryBase<T>) propertyInfo.GetValue(this, null);
+            return propertyValue;
         }
     }
 }

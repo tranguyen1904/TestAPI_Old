@@ -17,6 +17,9 @@ using Microsoft.EntityFrameworkCore;
 using AutoMapper;
 using TestAPI.Repositories;
 using TestAPI.Contracts;
+using NLog;
+using System.IO;
+using TestAPI.Filters;
 
 namespace TestAPI
 {
@@ -24,6 +27,7 @@ namespace TestAPI
     {
         public Startup(IConfiguration configuration)
         {
+            LogManager.LoadConfiguration(String.Concat(Directory.GetCurrentDirectory(), "/nlog.config"));
             Configuration = configuration;
         }
 
@@ -39,6 +43,11 @@ namespace TestAPI
             services.AddControllers().AddNewtonsoftJson(options =>
             options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
             services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
+            services.AddSingleton<ILoggerManager, LoggerManager>();
+
+            services.AddScoped<ValidationFilterAttribute>();
+            
+            services.AddScoped(typeof(ValidateEntityExistsAttribute<>));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -48,6 +57,8 @@ namespace TestAPI
             {
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseMiddleware<ExceptionMiddleware>();
 
             app.UseHttpsRedirection();
 

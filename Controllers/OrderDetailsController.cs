@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TestAPI.Contracts;
+using TestAPI.Filters;
 using TestAPI.Models;
 using TestAPI.ViewModels;
 
@@ -16,135 +17,91 @@ namespace TestAPI.Controllers
     [ApiController]
     public class OrderDetailsController : ControllerBase
     {
+
         private IMapper _mapper;
         private IRepositoryWrapper _repoWrapper;
-        public OrderDetailsController(IMapper mapper, IRepositoryWrapper repoWrapper)
+        private ILoggerManager _logger;
+        public OrderDetailsController(IMapper mapper, IRepositoryWrapper repoWrapper, ILoggerManager logger)
         {
-
             _mapper = mapper;
             _repoWrapper = repoWrapper;
+            _logger = logger;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetOrderDetails()
         {
-            try
-            {
-                var orderDetails = await _repoWrapper.OrderDetail.GetOrderDetailsAsync();
-                return Ok(_mapper.Map<IEnumerable<OrderDetailViewModel>>(orderDetails));
-            }
-            catch (Exception)
-            {
-                return StatusCode(500, "Internal server error");
-            }
+            var orderDetails = await _repoWrapper.OrderDetail.GetOrderDetailsAsync();
+            _logger.LogInfo(LogMessage.GetAll(nameof(OrderDetail)));
+            return Ok(_mapper.Map<IEnumerable<OrderDetailViewModel>>(orderDetails));
         }
 
         [HttpGet("{id}")]
+        [ServiceFilter(typeof(ValidateEntityExistsAttribute<OrderDetail>))]
         public async Task<ActionResult<OrderDetailViewModel>> GetOrderDetail(int id)
         {
-            try
-            {
-                var orderDetail = await _repoWrapper.OrderDetail.GetOrderDetailById(id);
-                if (orderDetail == null)
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    return Ok(_mapper.Map<OrderDetail, OrderDetailViewModel>(orderDetail));
-                }
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, ErrorMessage.ServerError);
-            }
-
+            OrderDetail orderDetail = HttpContext.Items["entity"] as OrderDetail;
+            _logger.LogInfo(LogMessage.GetById(nameof(OrderDetail), id));
+            return Ok(_mapper.Map<OrderDetail, OrderDetailViewModel>(orderDetail));
         }
 
         [HttpPost]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<ActionResult> PostOrderDetail([FromBody] OrderDetailViewModel orderDetailVM)
         {
-
-            try
+            OrderDetail orderDetail = await _repoWrapper.OrderDetail.GetOrderDetailById(orderDetailVM.Id);
+            if (orderDetail != null)
             {
-                if (orderDetailVM == null)
-                {
-                    return BadRequest(ErrorMessage.ObjectNull(nameof(OrderDetail)));
-                }
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest();
-                }
-
-                OrderDetail orderDetail = await _repoWrapper.OrderDetail.GetOrderDetailById(orderDetailVM.OrderDetailId);
-                if (orderDetail != null)
-                {
-                    return BadRequest("Exists");
-                }
-                orderDetail = _mapper.Map<OrderDetail>(orderDetailVM);
-                _repoWrapper.OrderDetail.CreateOrderDetail(orderDetail);
-                await _repoWrapper.SaveAsync();
-                return CreatedAtAction(nameof(GetOrderDetail), new { id = orderDetail.OrderDetailId }, orderDetailVM);
+                _logger.LogError(LogMessage.ExistsId(nameof(OrderDetail), orderDetailVM.Id));
+                return BadRequest(LogMessage.ExistsId(nameof(OrderDetail), orderDetailVM.Id));
             }
-            catch (Exception)
+            orderDetail = _mapper.Map<OrderDetail>(orderDetailVM);
+            if (orderDetail.Id == 0)
             {
-                return StatusCode(500, "Internal server error");
+                _logger.LogError(LogMessage.InvalidId(nameof(OrderDetail)));
+                return BadRequest(LogMessage.InvalidId(nameof(OrderDetail)));
             }
+            _repoWrapper.OrderDetail.CreateOrderDetail(orderDetail);
+            await _repoWrapper.SaveAsync();
+
+            _logger.LogInfo(LogMessage.Created(nameof(OrderDetail), orderDetailVM.Id));
+            return CreatedAtAction(nameof(GetOrderDetail), new { id = orderDetail.Id }, orderDetailVM);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult> PutOrderDetail(int id, [FromBody] OrderDetailViewModel orderDetailVM)
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
+        [ServiceFilter(typeof(ValidateEntityExistsAttribute<OrderDetail>))]
+        public async Task<ActionResult> PutOrderDetail(int id, OrderDetailViewModel orderDetailVM)
         {
-            try
+
+            if (id != orderDetailVM.Id)
             {
-                if (orderDetailVM == null)
-                {
-                    return BadRequest(ErrorMessage.ObjectNull(nameof(OrderDetail)));
-                }
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ErrorMessage.ModelInvalid);
-                }
-                if (id != orderDetailVM.OrderDetailId)
-                {
-                    return BadRequest();
-                }
-                var orderDetail = await _repoWrapper.OrderDetail.GetOrderDetailById(orderDetailVM.OrderDetailId);
-                if (orderDetail == null)
-                {
-                    return NotFound();
-                }
-                _mapper.Map(orderDetailVM, orderDetail);
-                _repoWrapper.OrderDetail.UpdateOrderDetail(orderDetail);
-                await _repoWrapper.SaveAsync();
-                return NoContent();
+                _logger.LogError(LogMessage.IdNotMatch());
+                return BadRequest(LogMessage.IdNotMatch());
             }
-            catch (Exception e)
-            {
-                return StatusCode(500, ErrorMessage.ServerError);
-            }
+
+            OrderDetail orderDetail = HttpContext.Items["entity"] as OrderDetail;
+            _mapper.Map(orderDetailVM, orderDetail);
+
+            _repoWrapper.OrderDetail.UpdateOrderDetail(orderDetail);
+            await _repoWrapper.SaveAsync();
+
+            _logger.LogInfo(LogMessage.Updated(nameof(OrderDetail), id));
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<OrderDetailViewModel>> Delete(int id)
+        [ServiceFilter(typeof(ValidateEntityExistsAttribute<OrderDetail>))]
+        public async Task<ActionResult<OrderDetailViewModel>> DeleteOrderDetail(int id)
         {
-            try
-            {
-                OrderDetail orderDetail = await _repoWrapper.OrderDetail.GetOrderDetailById(id);
-                if (orderDetail == null)
-                {
-                    return NotFound();
-                }
-                _repoWrapper.OrderDetail.DeleteOrderDetail(orderDetail);
-                await _repoWrapper.SaveAsync();
-                return NoContent();
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, ErrorMessage.ServerError);
-            }
+            OrderDetail orderDetail = HttpContext.Items["entity"] as OrderDetail;
+
+            _repoWrapper.OrderDetail.DeleteOrderDetail(orderDetail);
+            await _repoWrapper.SaveAsync();
+
+            _logger.LogInfo(LogMessage.Deleted(nameof(OrderDetail), id));
+            return NoContent();
         }
 
     }
 }
-

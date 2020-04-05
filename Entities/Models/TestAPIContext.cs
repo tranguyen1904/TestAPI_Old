@@ -57,7 +57,7 @@ namespace TestAPI.Models
                     .HasName("UQ__OrderDet__08D097C0403C9EF7")
                     .IsUnique();
 
-                entity.Property(e => e.OrderDetailId)
+                entity.Property(e => e.Id)
                     .HasColumnName("OrderDetailID")
                     .ValueGeneratedNever();
 

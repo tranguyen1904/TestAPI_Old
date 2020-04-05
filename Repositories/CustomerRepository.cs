@@ -14,7 +14,7 @@ namespace TestAPI.Repositories
     public class CustomerRepository: RepositoryBase<Customer>, ICustomerRepository
     {
         public CustomerRepository(TestAPIContext context):base(context)
-        {
+        {            
         }
 
         public async Task<IEnumerable<Customer>> GetCustomersAsync()

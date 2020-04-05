@@ -14,5 +14,7 @@ namespace TestAPI.Contracts
         IPurchaseOrderRepository PurchaseOrder { get; }
         void Save();
         Task SaveAsync();
+
+        public IRepositoryBase<T> GetRepo<T>() where T : IEntity;
     }
 }

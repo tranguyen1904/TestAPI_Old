@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TestAPI.Contracts;
+using TestAPI.Filters;
 using TestAPI.Models;
-using TestAPI.Repositories;
 using TestAPI.ViewModels;
 
 namespace TestAPI.Controllers
@@ -17,130 +17,95 @@ namespace TestAPI.Controllers
     [ApiController]
     public class EmployeesController : ControllerBase
     {
-        private readonly IRepositoryWrapper _repoWrapper;
-        private readonly IMapper _mapper;
 
-        public EmployeesController(IRepositoryWrapper repositoryWrapper, IMapper mapper)
+        private IMapper _mapper;
+        private IRepositoryWrapper _repoWrapper;
+        private ILoggerManager _logger;
+        public EmployeesController(IMapper mapper, IRepositoryWrapper repoWrapper, ILoggerManager logger)
         {
-            _repoWrapper = repositoryWrapper;
             _mapper = mapper;
+            _repoWrapper = repoWrapper;
+            _logger = logger;
         }
 
-        // GET: api/Employees
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<EmployeeViewModel>>> GetEmployee()
+        public async Task<IActionResult> GetEmployees()
         {
-            try
-            {
-
-                var employees = await _repoWrapper.Employee.FindAll().ToListAsync();
-                return Ok(_mapper.Map<IEnumerable<Employee>, IEnumerable<EmployeeViewModel>>(employees));
-            } catch (Exception e)
-            {
-                return StatusCode(500, ErrorMessage.ServerError);
-            }            
+            var employees = await _repoWrapper.Employee.GetEmployeesAsync();
+            _logger.LogInfo(LogMessage.GetAll(nameof(Employee)));
+            return Ok(_mapper.Map<IEnumerable<EmployeeViewModel>>(employees));
         }
 
-        // GET: api/Employees/5
         [HttpGet("{id}")]
+        [ServiceFilter(typeof(ValidateEntityExistsAttribute<Employee>))]
         public async Task<ActionResult<EmployeeViewModel>> GetEmployee(int id)
         {
-            try
-            {
-                Employee employee = await _repoWrapper.Employee.GetEmployeeById(id);
-                if (employee == null)
-                {
-                    return NotFound();
-                } else
-                {
-                    return Ok(_mapper.Map<EmployeeViewModel>(employee));
-                }                
-            } catch (Exception e)
-            {
-                return StatusCode(500, ErrorMessage.ServerError);
-            }            
+            Employee employee = HttpContext.Items["entity"] as Employee;
+            _logger.LogInfo(LogMessage.GetById(nameof(Employee), id));
+            return Ok(_mapper.Map<Employee, EmployeeViewModel>(employee));
         }
-                
-        // POST: api/Employees
+
         [HttpPost]
-        public async Task<ActionResult<Employee>> PostEmployee([FromBody] EmployeeViewModel employeeVM)
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
+        public async Task<ActionResult> PostEmployee([FromBody] EmployeeViewModel employeeVM)
         {
-            try
+            Employee employee = await _repoWrapper.Employee.GetEmployeeById(employeeVM.Id);
+            if (employee != null)
             {
-                if (employeeVM == null)
-                {
-                    return BadRequest(ErrorMessage.ObjectNull(nameof(Employee)));
-                }
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ErrorMessage.ModelInvalid);
-                }
-
-                Employee employee = await _repoWrapper.Employee.GetEmployeeById(employeeVM.Id);
-                if (employee != null)
-                {
-                    return BadRequest("Exists");
-                }
-                employee = _mapper.Map<Employee>(employeeVM);
-                
-                _repoWrapper.Employee.UpdateEmployee(employee);
-                await _repoWrapper.SaveAsync();
-                return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, employeeVM);
-            } catch (Exception e)
-            {
-                return StatusCode(500, e.Message);
+                _logger.LogError(LogMessage.ExistsId(nameof(Employee), employeeVM.Id));
+                return BadRequest(LogMessage.ExistsId(nameof(Employee), employeeVM.Id));
             }
+            employee = _mapper.Map<Employee>(employeeVM);
+            if (employee.Id == 0)
+            {
+                _logger.LogError(LogMessage.InvalidId(nameof(Employee)));
+                return BadRequest(LogMessage.InvalidId(nameof(Employee)));
+            }
+            _repoWrapper.Employee.CreateEmployee(employee);
+            await _repoWrapper.SaveAsync();
+
+            _logger.LogInfo(LogMessage.Created(nameof(Employee), employeeVM.Id));
+            return CreatedAtAction(nameof(GetEmployee), new { id = employee.Id }, employeeVM);
         }
 
-        // PUT: api/Employees/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutEmployee(int id, [FromBody]EmployeeViewModel employeeVM)
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
+        [ServiceFilter(typeof(ValidateEntityExistsAttribute<Employee>))]
+        public async Task<ActionResult> PutEmployee(int id, EmployeeViewModel employeeVM)
         {
-            try
+
+            if (id != employeeVM.Id)
             {
-                if (employeeVM == null)
-                {
-                    return BadRequest(ErrorMessage.ObjectNull(nameof(Employee)));
-                }
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ErrorMessage.ModelInvalid);
-                }
-                Employee employee = await _repoWrapper.Employee.GetEmployeeById(id);
-                if (employee == null)
-                {
-                    return NotFound();
-                }
-                _mapper.Map(employeeVM, employee);
-                _repoWrapper.Employee.UpdateEmployee(employee);
-                await _repoWrapper.SaveAsync();
-                return NoContent();
-            } catch (Exception e)
-            {
-                return StatusCode(500, ErrorMessage.ServerError);
+                _logger.LogError(LogMessage.IdNotMatch());
+                return BadRequest(LogMessage.IdNotMatch());
             }
+
+            Employee employee = HttpContext.Items["entity"] as Employee;
+            _mapper.Map(employeeVM, employee);
+
+            _repoWrapper.Employee.UpdateEmployee(employee);
+            await _repoWrapper.SaveAsync();
+
+            _logger.LogInfo(LogMessage.Updated(nameof(Employee), id));
+            return NoContent();
         }
 
-        // DELETE: api/Employees/5
         [HttpDelete("{id}")]
+        [ServiceFilter(typeof(ValidateEntityExistsAttribute<Employee>))]
         public async Task<ActionResult<EmployeeViewModel>> DeleteEmployee(int id)
         {
-            try
+            Employee employee = HttpContext.Items["entity"] as Employee;
+            if ((await _repoWrapper.PurchaseOrder.PurchaseOrdersByEmployee(id)).Any())
             {
-                Employee employee = await _repoWrapper.Employee.GetEmployeeById(id);
-                if (employee == null)
-                {
-                    return NotFound();
-                }
-                _repoWrapper.Employee.DeleteEmployee(employee);
-                await _repoWrapper.SaveAsync();
-                return NoContent();
-            } catch(Exception e)
-            {
-                return StatusCode(500, ErrorMessage.ServerError);
+                _logger.LogError(LogMessage.DeleteError(nameof(Employee), id, nameof(PurchaseOrder)));
+                return BadRequest(LogMessage.DeleteError(nameof(Employee), id, nameof(PurchaseOrder)));
             }
+            _repoWrapper.Employee.DeleteEmployee(employee);
+            await _repoWrapper.SaveAsync();
+
+            _logger.LogInfo(LogMessage.Deleted(nameof(Employee), id));
+            return NoContent();
         }
 
-        
     }
 }

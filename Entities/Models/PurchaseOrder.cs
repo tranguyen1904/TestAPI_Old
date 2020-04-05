@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using TestAPI.Contracts;
 
 namespace TestAPI.Models
 {
-    public partial class PurchaseOrder
+    public partial class PurchaseOrder: IEntity
     {
         public PurchaseOrder()
         {

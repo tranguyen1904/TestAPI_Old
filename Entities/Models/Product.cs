@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using TestAPI.Contracts;
 
 namespace TestAPI.Models
 {
-    public partial class Product
+    public partial class Product: IEntity
     {
         public Product()
         {

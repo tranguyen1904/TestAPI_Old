@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using TestAPI.Contracts;
 
 namespace TestAPI.Models
 {
-    public partial class OrderDetail
+    public partial class OrderDetail: IEntity
     {
-        public int OrderDetailId { get; set; }
+        public int Id { get; set; }
         public int OrderId { get; set; }
         public int ProductId { get; set; }
         public int? Quantity { get; set; }

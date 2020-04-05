@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using TestAPI.Contracts;
 
 namespace TestAPI.ViewModels
 {
-    public class OrderDetailViewModel
+    public class OrderDetailViewModel: IEntity
     {
         [Required]
-        public int OrderDetailId { get; set; }
+        public int Id { get; set; }
         [Required]
         public int OrderId { get; set; }
         [Required]

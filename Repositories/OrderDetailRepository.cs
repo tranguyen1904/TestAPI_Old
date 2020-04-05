@@ -22,7 +22,7 @@ namespace TestAPI.Repositories
 
         public async Task<OrderDetail> GetOrderDetailById(int id)
         {
-            return await FindByCondition(c => c.OrderDetailId == id).FirstOrDefaultAsync();
+            return await FindByCondition(c => c.Id == id).FirstOrDefaultAsync();
         }
 
         public void CreateOrderDetail(OrderDetail OrderDetail)
@@ -38,6 +38,16 @@ namespace TestAPI.Repositories
         public void DeleteOrderDetail(OrderDetail OrderDetail)
         {
             Delete(OrderDetail);
+        }
+
+        public async Task<IEnumerable<OrderDetail>> OrderDetailsByPurchaseOrder(int id)
+        {
+            return await FindByCondition(o => o.OrderId == id).ToListAsync();
+        }
+
+        public async Task<IEnumerable<OrderDetail>> OrderDetailsByProduct(int id)
+        {
+            return await FindByCondition(o => o.ProductId == id).ToListAsync();
         }
     }
 }

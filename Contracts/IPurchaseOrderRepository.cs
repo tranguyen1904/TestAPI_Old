@@ -13,5 +13,9 @@ namespace TestAPI.Contracts
         void CreatePurchaseOrder(PurchaseOrder PurchaseOrder);
         void UpdatePurchaseOrder(PurchaseOrder PurchaseOrder);
         void DeletePurchaseOrder(PurchaseOrder PurchaseOrder);
+
+        Task<IEnumerable<PurchaseOrder>> PurchaseOrdersByCustomer(int Id);
+        Task<IEnumerable<PurchaseOrder>> PurchaseOrdersByEmployee(int Id);
+
     }
 }

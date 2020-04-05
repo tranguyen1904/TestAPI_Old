@@ -13,5 +13,8 @@ namespace TestAPI.Contracts
         void CreateOrderDetail(OrderDetail OrderDetail);
         void UpdateOrderDetail(OrderDetail OrderDetail);
         void DeleteOrderDetail(OrderDetail OrderDetail);
+
+        Task<IEnumerable<OrderDetail>> OrderDetailsByPurchaseOrder(int id);
+        Task<IEnumerable<OrderDetail>> OrderDetailsByProduct(int id);
     }
 }

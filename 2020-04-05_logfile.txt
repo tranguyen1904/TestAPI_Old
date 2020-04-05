@@ -1,0 +1,171 @@
+2020-04-05 15:36:38.3606 INFO Returned all Customer from database.
+2020-04-05 15:36:42.3696 ERROR Something went wrong: System.NullReferenceException: Object reference not set to an instance of an object.
+   at TestAPI.Filters.ValidateEntityExistsAttribute`1.OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next) in C:\Users\TrangUyen\Source\Repos\TestAPI\Filters\ValidateEntityExistsAttribute.cs:line 42
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location where exception was thrown ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|19_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|6_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at TestAPI.ExceptionMiddleware.InvokeAsync(HttpContext httpContext) in C:\Users\TrangUyen\Source\Repos\TestAPI\ExceptionMiddleware.cs:line 27
+2020-04-05 15:36:47.8073 INFO Returned all Customer from database.
+2020-04-05 16:01:23.7884 ERROR Something went wrong: System.InvalidCastException: Unable to cast object of type 'System.Reflection.RuntimePropertyInfo' to type 'TestAPI.Contracts.IRepositoryBase`1[TestAPI.Models.Customer]'.
+   at TestAPI.Repositories.RepositoryWrapper.GetRepo[T]() in C:\Users\TrangUyen\Source\Repos\TestAPI\Repositories\RepositoryWrapper.cs:line 98
+   at TestAPI.Filters.ValidateEntityExistsAttribute`1.OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next) in C:\Users\TrangUyen\Source\Repos\TestAPI\Filters\ValidateEntityExistsAttribute.cs:line 37
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location where exception was thrown ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|19_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|6_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at TestAPI.ExceptionMiddleware.InvokeAsync(HttpContext httpContext) in C:\Users\TrangUyen\Source\Repos\TestAPI\ExceptionMiddleware.cs:line 27
+2020-04-05 16:04:46.4226 INFO Returned a Customer ID=1 from database.
+2020-04-05 16:04:54.2153 INFO Returned a Customer ID=2 from database.
+2020-04-05 16:04:57.4425 INFO Returned a Customer ID=4 from database.
+2020-04-05 16:05:00.2110 ERROR Customer ID=7 hasn't been found in database.
+2020-04-05 16:13:29.9007 ERROR Customer ID=7 hasn't been found in database.
+2020-04-05 16:13:32.9469 INFO Returned a Customer ID=4 from database.
+2020-04-05 16:20:29.1241 INFO Returned a Customer ID=4 from database.
+2020-04-05 16:20:31.2594 INFO Returned a Customer ID=4 from database.
+2020-04-05 17:06:34.6556 ERROR Customer ID=0 already exists in database.
+2020-04-05 17:06:52.2663 INFO Customer ID=0 were successful deleted.
+2020-04-05 17:07:05.4514 ERROR ID not null and > 0
+2020-04-05 17:07:16.1600 ERROR ID not null and > 0
+2020-04-05 17:07:26.0371 ERROR Customer ID=1 already exists in database.
+2020-04-05 17:44:55.7452 ERROR The Customer with ID=1 already exists in the database.
+2020-04-05 17:45:04.7138 INFO Returned all Customers from the database.
+2020-04-05 17:45:11.8917 ERROR The Customer with ID=11 couldn't be found in the database.
+2020-04-05 17:45:23.0640 INFO Returned a Customer with ID=1 from the database.
+2020-04-05 17:45:36.1474 ERROR The Customer with ID=1 already exists in the database.
+2020-04-05 17:46:05.5694 ERROR The Customer ID must be non-empty and greater than 0.
+2020-04-05 17:46:18.2393 INFO The Customer with ID=9 was created successfully.
+2020-04-05 17:46:38.3298 INFO The Customer with ID=9 was updated successfully.
+2020-04-05 17:46:43.7118 ERROR The Id in the URL doesn't match the object's Id in the request body.
+2020-04-05 17:46:55.3443 INFO The Customer with ID=9 was updated successfully.
+2020-04-05 17:47:01.3979 INFO Returned a Customer with ID=9 from the database.
+2020-04-05 17:47:05.4190 INFO Customer ID=9 was deleted successfully.
+2020-04-05 17:47:09.7038 ERROR The Customer with ID=91 couldn't be found in the database.
+2020-04-05 21:39:25.6800 INFO Returned all Customers from the database.
+2020-04-05 21:40:16.5187 INFO Returned all Customers from the database.
+2020-04-05 21:42:48.1977 INFO Returned all Customers from the database.
+2020-04-05 21:42:48.4127 INFO Returned all Customers from the database.
+2020-04-05 21:43:21.1210 ERROR The Customer with ID=222 couldn't be found in the database.
+2020-04-05 21:43:43.0519 INFO Returned all Customers from the database.
+2020-04-05 21:50:19.7511 INFO Returned all Customers from the database.
+2020-04-05 21:50:20.8315 INFO Returned all Customers from the database.
+2020-04-05 21:51:22.3498 INFO Returned all Customers from the database.
+2020-04-05 21:51:36.1054 INFO Returned a Customer with ID=1 from the database.
+2020-04-05 21:52:11.0320 INFO Returned a Customer with ID=1 from the database.
+2020-04-05 22:44:04.9400 INFO Returned all Products from the database.
+2020-04-05 22:45:05.0798 ERROR The Customer with ID=91 couldn't be found in the database.
+2020-04-05 22:45:14.0085 INFO Customer ID=1 was deleted successfully.
+2020-04-05 22:45:42.8289 INFO Returned all Products from the database.
+2020-04-05 22:45:57.6868 INFO Returned a Product with ID=1 from the database.
+2020-04-05 22:46:50.0128 INFO The Product with ID=1 was updated successfully.
+2020-04-05 22:47:10.6823 INFO The Product with ID=1 was updated successfully.
+2020-04-05 22:47:15.5735 INFO Returned a Product with ID=1 from the database.
+2020-04-05 22:47:21.7400 INFO Product ID=1 was deleted successfully.
+2020-04-05 22:47:24.2373 ERROR The Product with ID=1 couldn't be found in the database.
+2020-04-05 22:47:37.5659 INFO The Product with ID=1 was created successfully.
+2020-04-05 22:47:52.0095 INFO The Employee with ID=1 was created successfully.
+2020-04-05 22:47:58.2246 INFO Returned all Employees from the database.
+2020-04-05 22:48:07.6182 INFO Returned a Employee with ID=1 from the database.
+2020-04-05 22:48:15.6154 INFO The Employee with ID=1 was updated successfully.
+2020-04-05 22:48:56.9910 INFO The Employee with ID=1 was updated successfully.
+2020-04-05 22:51:02.3295 INFO The Employee with ID=1 was updated successfully.
+2020-04-05 22:53:20.8792 ERROR The Employee with ID=1 already exists in the database.
+2020-04-05 22:58:17.6416 INFO Returned all Products from the database.
+2020-04-05 23:03:41.3172 ERROR Something went wrong: Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while updating the entries. See the inner exception for details.
+ ---> Microsoft.Data.SqlClient.SqlException (0x80131904): The INSERT statement conflicted with the FOREIGN KEY constraint "FK__PurchaseO__Custo__6754599E". The conflict occurred in database "test", table "dbo.Customer", column 'ID'.
+The statement has been terminated.
+   at Microsoft.Data.SqlClient.SqlCommand.<>c.<ExecuteDbDataReaderAsync>b__164_0(Task`1 result)
+   at System.Threading.Tasks.ContinuationResultTaskFromResultTask`2.InnerInvoke()
+   at System.Threading.Tasks.Task.<>c.<.cctor>b__274_0(Object obj)
+   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+--- End of stack trace from previous location where exception was thrown ---
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+ClientConnectionId:03f5cde0-2d1f-48c6-967e-117be42a15b3
+Error Number:547,State:0,Class:16
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(DbContext _, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at TestAPI.Repositories.RepositoryWrapper.SaveAsync() in C:\Users\TrangUyen\Source\Repos\TestAPI\Repositories\RepositoryWrapper.cs:line 92
+   at TestAPI.Controllers.PurchaseOrdersController.PostPurchaseOrder(PurchaseOrderViewModel purchaseOrderVM) in C:\Users\TrangUyen\Source\Repos\TestAPI\Controllers\PurchaseOrdersController.cs:line 64
+   at lambda_method(Closure , Object )
+   at Microsoft.Extensions.Internal.ObjectMethodExecutorAwaitable.Awaiter.GetResult()
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfActionResultExecutor.Execute(IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|19_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|6_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at TestAPI.ExceptionMiddleware.InvokeAsync(HttpContext httpContext) in C:\Users\TrangUyen\Source\Repos\TestAPI\ExceptionMiddleware.cs:line 27
+2020-04-05 23:03:47.8490 INFO Returned all PurchaseOrders from the database.
+2020-04-05 23:04:06.3795 INFO Returned a PurchaseOrder with ID=30 from the database.
+2020-04-05 23:04:16.3944 INFO The PurchaseOrder with ID=30 was updated successfully.
+2020-04-05 23:04:24.2286 ERROR Something went wrong: Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while updating the entries. See the inner exception for details.
+ ---> Microsoft.Data.SqlClient.SqlException (0x80131904): The UPDATE statement conflicted with the FOREIGN KEY constraint "FK__PurchaseO__Emplo__68487DD7". The conflict occurred in database "test", table "dbo.Employee", column 'ID'.
+The statement has been terminated.
+   at Microsoft.Data.SqlClient.SqlCommand.<>c.<ExecuteDbDataReaderAsync>b__164_0(Task`1 result)
+   at System.Threading.Tasks.ContinuationResultTaskFromResultTask`2.InnerInvoke()
+   at System.Threading.Tasks.Task.<>c.<.cctor>b__274_0(Object obj)
+   at System.Threading.ExecutionContext.RunInternal(ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location where exception was thrown ---
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+--- End of stack trace from previous location where exception was thrown ---
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+ClientConnectionId:03f5cde0-2d1f-48c6-967e-117be42a15b3
+Error Number:547,State:0,Class:16
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(DbContext _, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at TestAPI.Repositories.RepositoryWrapper.SaveAsync() in C:\Users\TrangUyen\Source\Repos\TestAPI\Repositories\RepositoryWrapper.cs:line 92
+   at TestAPI.Controllers.PurchaseOrdersController.PutPurchaseOrder(Int32 id, PurchaseOrderViewModel purchaseOrderVM) in C:\Users\TrangUyen\Source\Repos\TestAPI\Controllers\PurchaseOrdersController.cs:line 85
+   at lambda_method(Closure , Object )
+   at Microsoft.Extensions.Internal.ObjectMethodExecutorAwaitable.Awaiter.GetResult()
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfActionResultExecutor.Execute(IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|19_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|6_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at TestAPI.ExceptionMiddleware.InvokeAsync(HttpContext httpContext) in C:\Users\TrangUyen\Source\Repos\TestAPI\ExceptionMiddleware.cs:line 27
+2020-04-05 23:34:47.2366 INFO Returned all Products from the database.
+2020-04-05 23:35:01.9089 ERROR Cannot delete a Customer with ID=100. It has related PurchaseOrder.
+2020-04-05 23:46:55.9261 INFO Returned all Products from the database.
+2020-04-05 23:46:55.9261 INFO Returned all PurchaseOrders from the database.
+2020-04-05 23:47:09.1101 INFO Returned all OrderDetails from the database.
+2020-04-05 23:47:25.6377 ERROR Cannot delete Product with ID=401. It has related OrderDetails.
+2020-04-05 23:47:44.5601 ERROR Cannot delete PurchaseOrder with ID=301. It has related OrderDetails.
